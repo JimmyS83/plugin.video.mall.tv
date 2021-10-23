@@ -3,7 +3,7 @@
 from bs4 import BeautifulSoup
 import requests
 import re
-from urlparse import urlparse, urlunparse
+from urllib.parse import urlparse, urlunparse
 
 class MallApi():
 
@@ -102,6 +102,10 @@ class MallApi():
 
         videos = self.extract_videos(page, search_section=True)
 
+        for r in videos:
+            r.pop('show_link')
+            r.pop('show_name')
+
         return seasons + videos
 
     def get_seasons(self, page):
@@ -131,6 +135,8 @@ class MallApi():
             ctx_url = self.url_for('show', link=r['show_link'])
             r['label'] = '[LIGHT]%s[/LIGHT] | %s' % (r['show_name'], r['label'])
             r['context_menu'] = [(self.plugin.get_string(30014), 'XBMC.Container.Update({}, false)'.format(ctx_url))]
+            r.pop('show_link')
+            r.pop('show_name')
 
         return videos
 
@@ -162,6 +168,8 @@ class MallApi():
 
         for r in videos:
             r['context_menu'] = [(self.plugin.get_string(30014), 'XBMC.Container.Update({}, false)'.format(r['path']))]
+            r.pop('show_link')
+            r.pop('show_name')
 
         return videos
 
@@ -210,7 +218,7 @@ class MallApi():
                 'label': link.text,
                 'thumbnail': self.get_thumb_url(card.find('div', {'class': ['video-card__thumbnail', 'lazy']})['data-src']),
                 'path': self.url_for('video', link=link['href'].encode('utf-8')),
-                'link': link['href'],
+#                'link': link['href'],
                 'info': {
                     'duration': self.get_duration(duration.text),
                     'mediatype': 'episode',
@@ -248,7 +256,7 @@ class MallApi():
             result.append({
                 'label': link.text,
                 'thumbnail': self.get_thumb_url(card.find('div', {'class': ['video-card__thumbnail', 'lazy']})['data-src']),
-                'link': link['href'],
+#                'link': link['href'],
                 'path': self.url_for('livestream', link=link['href'].encode('utf-8')),
                 'info': {
                     'duration': '',
