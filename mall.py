@@ -300,13 +300,12 @@ class MallApi():
         if not main_link.endswith('index'):
             video_id=main_link.split('/')[-1]
 
-        main_link += '.m3u8'
         url_parts = urlparse(main_link, 'https')
         main_link = urlunparse(url_parts)
 
         index_list = requests.get(main_link).text
 
-        qualities = re.findall(video_id+r'(\d+)/index.m3u8', index_list, flags=re.MULTILINE)
+        qualities = re.findall(r'(\d+)p/index.m3u8', index_list, flags=re.MULTILINE)
         if not len(qualities):
             self.plugin.notify(self.plugin.get_string(30021).encode("utf-8"), delay=7000, image=self.plugin._addon.getAddonInfo('icon'))
             return None
@@ -322,8 +321,8 @@ class MallApi():
 
         # current live streams contain 'live' text in their link and have to be treated differently
         if 'live' not in main_link:
-            url = '{0}/{1}/index{1}.mp4' if self.plugin.get_setting('format') == 'MP4' else '{0}/{1}/index.m3u8';
-            return url.format(main_link.replace('/index.m3u8', ''), selected)
+            url = '{0}/{1}p/index{1}.mp4' if self.plugin.get_setting('format') == 'MP4' else '{0}/{1}p/index.m3u8';
+            return url.format(main_link.replace('/'+video_id, ''), selected)
         else:
             url = '{0}{1}/index.m3u8'
             return url.format(main_link.replace('.m3u8', ''), selected)
