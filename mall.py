@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup
 import requests
 import re
 from urllib.parse import urlparse, urlunparse
+import os
+import xbmc, xbmcvfs
 
 class MallApi():
 
@@ -329,8 +331,20 @@ class MallApi():
 
         # current live streams contain 'live' text in their link and have to be treated differently
         if 'live' not in main_link:
-            url = '{0}/{1}p/index{1}.mp4' if self.plugin.get_setting('format') == 'MP4' else '{0}/{1}p/index.m3u8';
-            return url.format(main_link.replace('/'+video_id, ''), selected)
+            playlist_content = re.sub(r'(\d+p/)', main_link.replace('/'+video_id, '')+r'/\1', index_list)
+            items=re.findall(r"#EXT[^#]*" + re.escape(str(selected)) + r"p/[^#]*", playlist_content, flags=re.DOTALL)
+            
+            try:
+                playlist_path = os.path.join(xbmcvfs.translatePath('special://temp/'), 'malltv.m3u8')
+                file = xbmcvfs.File(playlist_path, 'w')
+                file.write('#EXTM3U\n')
+                for item in items:
+                    file.write(str(item))
+                file.close()
+            except:
+                self.plugin.log.debug('Chyba pri vytvareni souboru playlistu.')   
+            
+            return playlist_path
         else:
             url = '{0}{1}/index.m3u8'
             return url.format(main_link.replace('.m3u8', ''), selected)
