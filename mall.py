@@ -319,7 +319,7 @@ class MallApi():
         index_list = requests.get(main_link).text
         
         if 'live' not in main_link:
-            qualities = re.findall(r'(\d+)p/index.m3u8', index_list, flags=re.MULTILINE)
+            qualities = re.findall(r'(\d+)./index.m3u8', index_list, flags=re.MULTILINE)
         else:
             qualities = re.findall(video_id+r'(\d+)/index.m3u8', index_list, flags=re.MULTILINE)
 
@@ -338,14 +338,28 @@ class MallApi():
 
         # current live streams contain 'live' text in their link and have to be treated differently
         if 'live' not in main_link:
-            playlist_content = re.sub(r'(\d+p/)', main_link.replace('/'+video_id, '')+r'/\1', index_list)
-            items=re.findall(r"#EXT[^#]*" + re.escape(str(selected)) + r"p/[^#]*", playlist_content, flags=re.DOTALL)
+            playlist_content = re.sub(r'URI=\"(.*index.m3u8)', 'URI=\"' + main_link.replace('/'+video_id, '') + r'/\1', index_list) #AUDIO
+            playlist_content = re.sub(r'[\n]([^#]*index.m3u8)', '\n' + main_link.replace('/'+video_id, '') + r'/\1', playlist_content) # VIDEO
+            items_audio=re.findall(r"#EXT[^#]*TYPE=AUDIO[^#]*", playlist_content, flags=re.DOTALL)
+            items_video=re.findall(r"#EXT[^#]*BANDWIDTH[^#]*", playlist_content, flags=re.DOTALL)
+            if len(items_audio) > 1:
+                for item in items_audio:
+                    if str(selected) in item:
+                        items_audio = item
+                        break
+            if len(items_video) > 1:
+                for item in items_video:
+                    if str(selected) in item:
+                        items_video = item
+                        break
             
             try:
                 playlist_path = os.path.join(xbmcvfs.translatePath('special://temp/'), 'malltv.m3u8')
                 file = xbmcvfs.File(playlist_path, 'w')
                 file.write('#EXTM3U\n')
-                for item in items:
+                for item in items_audio:
+                    file.write(str(item))
+                for item in items_video:
                     file.write(str(item))
                 file.close()
             except:
