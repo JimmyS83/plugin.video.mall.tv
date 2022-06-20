@@ -304,10 +304,17 @@ class MallApi():
 
         url_parts = urlparse(main_link, 'https')
         main_link = urlunparse(url_parts)
+        
+        if 'live' in main_link:
+            main_link += '.m3u8'
 
         index_list = requests.get(main_link).text
+        
+        if 'live' not in main_link:
+            qualities = re.findall(r'(\d+)p/index.m3u8', index_list, flags=re.MULTILINE)
+        else:
+            qualities = re.findall(video_id+r'(\d+)/index.m3u8', index_list, flags=re.MULTILINE)
 
-        qualities = re.findall(r'(\d+)p/index.m3u8', index_list, flags=re.MULTILINE)
         if not len(qualities):
             self.plugin.notify(self.plugin.get_string(30021).encode("utf-8"), delay=7000, image=self.plugin._addon.getAddonInfo('icon'))
             return None
